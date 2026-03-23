@@ -1,0 +1,10 @@
+textual
+numpy
+scipy
+hmmlearn
+yfinance
+fredapi
+duckdb
+requests
+python-dotenv
+pytest
