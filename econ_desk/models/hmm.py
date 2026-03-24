@@ -20,7 +20,7 @@ def build_feature_matrix(returns: np.ndarray, macro: np.ndarray) -> np.ndarray:
     Returns:
         Feature matrix of shape (T, n_assets + n_macro) ready for HMM training.
     """
-    pass
+    return np.column_stack([returns,macro])
 
 
 def train_hmm(features: np.ndarray, n_states: int = 5, n_iter: int = 100) -> GaussianHMM:
@@ -38,7 +38,9 @@ def train_hmm(features: np.ndarray, n_states: int = 5, n_iter: int = 100) -> Gau
     Returns:
         Trained GaussianHMM model instance.
     """
-    pass
+    model = GaussianHMM(n_components=n_states, n_iter= n_iter, covariance_type="full")
+    model.fit(features)
+    return model
 
 
 def decode_regime(model: GaussianHMM, features: np.ndarray) -> tuple[int, np.ndarray]:
@@ -55,11 +57,17 @@ def decode_regime(model: GaussianHMM, features: np.ndarray) -> tuple[int, np.nda
     Returns:
         Tuple of:
             - current_state: int index of the most likely current regime (0-4).
-            - state_probs: Array of shape (n_states,) with posterior
-              probabilities for each state at the latest time step
-              (the max value is the confidence score).
+            - current_probs: Array of shape (n_states,) with posterior
+                probabilities for each state at the latest time step
+                (the max value is the confidence score).
     """
-    pass
+    state_sequence = model.predict(features) # Viterbi Path, regime estimation
+    current_state=  state_sequence[-1] # last entry will be todays regime
+
+    state_probs = model.predict_proba(features) # produces array of probabilites for each hidden state
+    current_probs = state_probs[-1] # gets probabilities for each hidden state for today.
+
+    return(current_state, current_probs)
 
 
 def get_transition_matrix(model: GaussianHMM) -> np.ndarray:
@@ -76,4 +84,6 @@ def get_transition_matrix(model: GaussianHMM) -> np.ndarray:
         Transition matrix of shape (n_states, n_states) where entry [i, j]
         is the probability of moving from regime i to regime j in 30 days.
     """
-    pass
+    trans_matrix = np.linalg.matrix_power(model.transmat_, 30)
+
+    return trans_matrix
